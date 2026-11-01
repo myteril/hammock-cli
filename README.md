@@ -1,189 +1,163 @@
 # Hammock
 
-Hammock, klasörünüzdeki JSON dosyalarını tek komutla kullanılabilir bir mock API'ye dönüştürür.
+> Turn a folder of JSON files into a working mock API with one command — no backend code, no config files, no dependencies.
 
-Hammock yalnızca yerel geliştirme içindir. Üretim ortamında kullanmayın.
+![Node.js 22+](https://img.shields.io/badge/Node.js-22+-339933?logo=node.js&logoColor=white) ![MIT License](https://img.shields.io/badge/license-MIT-blue) ![0 dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 
-## Güvenlik ve Yerel Kullanım
+**English Documentation** · [Turkish Documentation](README.tur.md)
 
-Hammock'u çalıştırmadan önce aşağıdaki noktaları gözden geçirin:
+## Local-only warning
 
-- **Yalnızca yerel geliştirme içindir.** Üretim ortamında, herkese açık sunucularda veya güvenilmeyen ağlarda kullanmayın.
-- **CORS bir erişim denetimi değildir.** Hammock, joker karakter (`*`) yerine isteğin geçerli `Origin` değerini yansıtır; bu bir kaynak izin listesi değildir. Hammock çalışırken, tarayıcınızdaki herhangi bir geçerli `http` veya `https` web sitesi sunulan JSON dosyalarını okuyabilir. Çerezler ve HTTP kimlik doğrulaması gibi kimlik bilgileri desteklenmez. Bu nedenle yalnızca bu iş için ayrılmış bir mock veri klasöründe çalıştırın.
-- **Gizli dosyalar dahil tüm `.json` dosyaları sunulabilir.** Sır, token, kimlik bilgisi, özel anahtar veya müşteri verisi içeren dosyaları bu klasöre koymayın.
-- **Ev klasörünüzde veya güvenmediğiniz projelerde çalıştırmayın.** Sunulan klasördeki her JSON dosyası erişilebilir hale gelir.
-- **İşiniz bitince sunucuyu durdurun.** Ctrl+C ile kapatın. Hammock'u port yönlendirme, ters proxy veya tünel ile dışarı açmayın.
-- **Sertifika ve anahtarlarınızı koruyun.** Bu dosyaları sunulan klasörün dışında tutun ve dosya izinlerini kısıtlayın. Özel anahtarınızı paylaşmayın.
-- **`mkcert` yerel bir kök CA kurar.** Yalnızca etkisini anladığınız makinelerde kullanın.
+> [!WARNING]
+> **Hammock is for local development only, and it is not secured.** It has no authentication and no authorization, and neither binding to `127.0.0.1` nor its read-only behavior is an access-control boundary. Never use it in production or on a public server, and never expose it through port forwarding, a reverse proxy, or a tunnel.
+>
+> **Serve a dedicated folder that holds only synthetic mock data.** Every routable `.json` file in that folder, including dot-prefixed hidden files, can be read whenever its route is known or guessed, and the absence of a directory listing is not confidentiality. Do not place secrets, tokens, credentials, private keys, production data, or customer data in the served folder.
+>
+> **Do not start Hammock from your home directory, a real project or repository root, or an untrusted project**, because files such as `package.json` would become routable. Stop the server with Ctrl+C when you are done.
 
-## Neden Hammock?
+## Why Hammock?
 
-- **Tek komut yeterlidir.** Klasörünüzde `hammock` çalıştırın; JSON dosyalarınız kullanıma hazır olsun.
-- **Alt klasörler desteklenir.** İstediğiniz derinlikteki JSON dosyalarını aynı basit adres düzeniyle sunun.
-- **Port seçimi otomatiktir.** Boş bir port bulunur; isterseniz `--port` ile belirli bir port seçersiniz.
-- **Ek paket gerekmez.** Hammock, Node.js'in yerleşik modülleriyle çalışır.
+- **One command, zero setup.** Run `hammock` inside a folder and every JSON file in it becomes an endpoint.
+- **Routes mirror your folders.** Any nesting depth works, and the URL pattern never changes.
+- **No extra packages.** Hammock runs on Node.js built-in modules only.
+- **Ports pick themselves.** Hammock takes the first free port from `3000`; `--port` pins a specific one.
+- **Always current.** Files are re-read on every request, so edits show up without a restart.
 
-## Kurulum
+Hammock fits frontend work: prototype a screen, demo a feature, or hand a client realistic responses before the real API exists.
 
-Node.js 22 veya üzeri bir sürüm gerekir. Sürümünüzü kontrol etmek için:
+## Quick start
+
+Hammock needs Node.js 22 or newer:
 
 ```bash
 node --version
 ```
 
-Hammock'u global olarak kurun:
+Install it globally:
 
 ```bash
 npm install -g @hammock/hammock-cli
 ```
 
-## Hızlı Başlangıç
-
-Örnek bir klasör yapısı:
+Create a folder with a JSON file or two:
 
 ```text
-projem/
-├── kullanicilar.json
-└── siparisler/
-    └── son.json
+my-project/
+├── users.json
+└── orders/
+    └── latest.json
 ```
-
-`kullanicilar.json` dosyası:
 
 ```json
 {
   "id": 1,
-  "ad": "Ayşe Yılmaz",
-  "rol": "gelistirici"
+  "name": "Ada Lovelace",
+  "role": "developer"
 }
 ```
 
-Klasöre gidin ve Hammock'u başlatın:
+Start Hammock from that folder:
 
 ```bash
-cd projem
+cd my-project
 hammock
 ```
 
-Hammock, sunulan klasörü ve adresi yazdırır:
-
 ```text
-Serving /sizin/projem
+Serving /path/to/my-project
 Listening on http://127.0.0.1:3000
 ```
 
-Tarayıcınızda şu adresleri açabilirsiniz:
+Both endpoints are now live:
 
-- http://127.0.0.1:3000/kullanicilar
-- http://127.0.0.1:3000/siparisler/son
+- http://127.0.0.1:3000/users
+- http://127.0.0.1:3000/orders/latest
 
-## Adresler Nasıl Çalışır?
+Hammock serves the folder you start it from and listens on `127.0.0.1` only, so those endpoints work on your machine alone.
 
-Adreslerde `.json` uzantısı yazılmaz. Hammock, adresin son parçasına `.json` ekleyerek dosyayı bulur:
+## How routes work
 
-| Dosya | Adres |
+Hammock appends `.json` to the last segment of the URL, so routes never carry the extension:
+
+| File | URL |
 |---|---|
-| `kullanicilar.json` | `/kullanicilar` |
-| `siparisler/son.json` | `/siparisler/son` |
-| `api/v1/urunler.json` | `/api/v1/urunler` |
+| `users.json` | `/users` |
+| `orders/latest.json` | `/orders/latest` |
+| `api/v1/products.json` | `/api/v1/products` |
 
-- Alt klasörlerin derinliği önemli değildir.
-- Adresin sonundaki sorgu parametreleri yok sayılır.
-- `/siparisler/son.json` gibi uzantı içeren adresler çalışmaz ve 404 döner.
-- Klasör listesi sunulmaz; yalnızca JSON dosyaları döner.
-- Dosyalar her istekte yeniden okunur; değişiklikler sunucuyu yeniden başlatmadan görünür.
+- Query parameters are ignored: `/users?role=admin` serves `users.json`.
+- A URL whose last segment already ends in `.json` returns `404`, so request `/users`, not `/users.json`.
+- Nested folders work to any depth, and directory listings are never served.
+- Symbolic links that resolve outside the served folder are not served and return `404`.
+- Every request re-reads the file from disk and loads it fully into memory, so keep mock files reasonably small.
 
-## Seçenekler
+## Requests and browser access
 
-| Seçenek | Açıklama |
+Hammock is read-only: it never creates, modifies, or deletes files. Read-only behavior prevents writes, not reads, and is not an access-control boundary.
+
+| Method | Result |
 |---|---|
-| `-p, --port <sayı>` | Belirli bir portu kullanır (1-65535). |
-| `--https` | HTTPS'i etkinleştirir; `--cert` ve `--key` birlikte gerekir. |
-| `--cert <dosya>` | PEM sertifika veya sertifika zinciri. |
-| `--key <dosya>` | PEM özel anahtar. |
-| `-h, --help` | Yardım metnini gösterir. |
-| `-v, --version` | Sürüm numarasını gösterir. |
+| `GET`, `POST`, `PUT` | The same JSON file is returned |
+| `OPTIONS` | `204` preflight response |
+| Anything else | `405` with an `Allow` header |
 
-## Port Seçimi
+POST and PUT bodies are read and discarded. A body larger than `1 MiB` is rejected with `413`.
 
-`--port` vermezseniz Hammock 3000'den başlayarak boş bir port arar. Örneğin 3000 kullanımdaysa 3001'e geçer.
+> **CORS is bypassed.** Hammock reflects a single syntactically valid `http` or `https` `Origin` in `Access-Control-Allow-Origin`, and that reflection is not an origin allowlist. A missing or invalid `Origin` gets no CORS response headers, but the request is still processed normally. `Access-Control-Allow-Credentials` is never sent, so credentialed browser requests such as `credentials: 'include'` are unsupported. Any `http` or `https` page your browser allows to reach this server — including sites you did not create — can read the served JSON, and non-browser clients can ignore CORS entirely.
 
-Belirli bir portu kullanmak için:
+## Options
 
-```bash
-hammock --port 4000
-```
+| Option | Description |
+|---|---|
+| `-p, --port <number>` | Use a specific port: an integer from `1` to `65535` |
+| `--https` | Serve over HTTPS; requires `--cert` and `--key` |
+| `--cert <path>` | PEM certificate or certificate chain |
+| `--key <path>` | PEM private key |
+| `-h, --help` | Show the help text |
+| `-v, --version` | Show the version number |
 
-`--port` ile verdiğiniz port kullanımdaysa Hammock başlamaz ve farklı bir port seçmenizi önerir. Bu durumda seçeneği kaldırarak otomatik seçime izin verebilirsiniz.
+Without `--port`, Hammock starts at `3000` and moves upward until it finds a free port. With `--port`, a busy port stops startup with an error; drop the option to let Hammock choose, or pick another port. `--cert` and `--key` are valid only together with `--https`, and `--https` fails if either of them is missing.
 
 ## HTTPS
-
-Varsayılan olarak Hammock HTTP ile çalışır. HTTPS kullanmak için `--https` seçeneğiyle birlikte bir sertifika ve özel anahtar dosyası verin:
 
 ```bash
 hammock --https --cert ./cert.pem --key ./key.pem
 ```
 
-Sertifikanızın tarayıcınız tarafından güvenilir olması ve yazdırılan `127.0.0.1` adresi için geçerli olması gerekir. Sertifikayı `localhost` için de geçerli kılarsanız `https://localhost:<port>` adresini kullanabilirsiniz. Bunun için sertifikanın Konu Alternatif Adları (Subject Alternative Name, SAN) alanında `127.0.0.1` ve tercihen `localhost` bulunmalıdır. Sertifika dosyanız, sertifika otoritenizin gerektirdiği durumlarda tam zinciri içermelidir.
+The certificate must be trusted by your browser and valid for `127.0.0.1`, ideally with `localhost` in its Subject Alternative Names; an untrusted certificate earns a browser warning. Hammock does not create certificates, download them, or contact a certificate authority. If the certificate or key cannot be read or loaded, the server does not start — it never falls back to HTTP.
 
-Hammock sertifika üretmez, indirmez veya bir sertifika otoritesine başvurmaz. Yalnızca sizin verdiğiniz dosyaları kullanır. Sertifika veya anahtar okunamıyor ya da yüklenemiyorsa sunucu hiç başlamaz; Hammock sessizce HTTP'ye dönmez.
+HTTPS protects transport only. It does not make public exposure, proxying, or tunneling safe.
 
-Yerel geliştirme için `mkcert` ile güvenilir bir sertifika oluşturabilirsiniz:
+> [!IMPORTANT]
+> **Keep certificate and key files outside the served folder, and restrict access to the private key.** Never reuse or commit a production private key; use a certificate dedicated to local development.
+
+On macOS or Linux you can tighten the key file permissions:
+
+```bash
+chmod 600 key.pem
+```
+
+For a locally trusted certificate you can use `mkcert`:
 
 ```bash
 mkcert -install
 mkcert -cert-file cert.pem -key-file key.pem 127.0.0.1 localhost
 ```
 
-`mkcert -install` makinenizde yerel bir kök CA kurar. Bu adımı yalnızca etkisini anladığınızda ve güvendiğiniz bir makinede yapın.
+`mkcert -install` installs a local root CA that browsers and applications trust. Run it only on a machine you control and understand.
 
-Kendinden imzalı sertifikalar tarayıcıda güvenlik uyarısı gösterir. Hassas verilerle çalışırken bu uyarıları geçmeyin; tarayıcınızın güvendiği bir sertifika kullanın.
+## Troubleshooting
 
-Sertifika ve anahtar dosyalarını sunulan klasörün dışında tutun. Özellikle özel anahtar dosyasının izinlerini kısıtlayın:
+| Problem | Fix |
+|---|---|
+| `404` although the file exists | The URL probably ends in `.json` or the path is wrong; request `/orders/latest`, not `/orders/latest.json`. |
+| `404` for a symlinked file | The link resolves outside the served folder, so Hammock refuses to serve it. |
+| Port already in use | The `--port` value is taken; omit `--port` or choose a different port. |
+| Browser certificate warning | The certificate is not trusted or does not cover `127.0.0.1`; check trust and Subject Alternative Names. |
+| `413` | A POST or PUT body is larger than `1 MiB`. |
+| `405` | The method is not `GET`, `POST`, `PUT`, or `OPTIONS`. |
+| No CORS headers in `curl` | No valid `Origin` header was sent; this is expected and the request was still served. |
 
-```bash
-chmod 600 key.pem
-```
+## License
 
-## İstek Türleri
-
-GET, POST ve PUT isteklerinin tümü aynı JSON dosyasını döndürür. Hammock salt okunurdur; dosyaları oluşturmaz, değiştirmez veya silmez.
-
-POST ve PUT isteklerinin gövdeleri okunur ve yok sayılır. İzin verilen sınırı aşan gövdeler 413 hatasıyla reddedilir. Diğer istek türleri 405 hatası döndürür.
-
-## CORS
-
-Hammock, joker karakter (`*`) yerine isteğin `Origin` başlığını yansıtır. Tarayıcıdan gelen çapraz kaynaklı bir istekte tam olarak bir `Origin` başlığı bulunmalı ve değeri şema, ana bilgisayar ve isteğe bağlı porttan oluşan kurallı bir `http` veya `https` kaynağı olmalıdır. Geçerli kaynak, `Access-Control-Allow-Origin` başlığında değiştirilmeden yansıtılır. Her yanıtta `Vary: Origin, Access-Control-Request-Headers` başlığı döner.
-
-Eksik, bozuk, `null`, yinelenen, virgülle ayrılmış liste veya `http`/`https` dışı bir `Origin` değeri için CORS yanıt başlıkları gönderilmez; istek yine normal şekilde işlenir. `Access-Control-Allow-Credentials` hiçbir zaman gönderilmez. Bu nedenle `credentials: 'include'` kullanan tarayıcı istekleri desteklenmez.
-
-Joker karakter (`*`) kimlik bilgisi içermeyen istekler için geçerlidir ve yalnızca kimlik bilgisi kullanan isteklerde kısıtlanır. Hammock kimlik bilgisi desteklemediği için kaynak yansıtma erişim denetimi sağlamaz ve joker karakterle aynı tarayıcı okuma erişimini sürdürür. CORS bir kimlik doğrulama mekanizması değildir; tarayıcı dışı istemciler `Origin` başlığını taklit edebilir.
-
-Geçerli kaynak içeren `OPTIONS` ön kontrol istekleri 204 durumuyla izin verilen yöntemleri ve doğrulanmış istenen başlıkları döndürür. Geçersiz kaynaklı ön kontrol istekleri yine 204 döner ancak CORS yanıt başlıkları içermez.
-
-## Sorun Giderme
-
-- **404 alıyorum.** Adreste `.json` uzantısı olmamalıdır. `siparisler/son.json` dosyası `/siparisler/son` adresinden sunulur; `/siparisler/son.json` çalışmaz. Dosyanın gerçekten klasörde olduğundan emin olun.
-- **Port kullanımda hatası alıyorum.** `--port` ile verdiğiniz port başka bir uygulama tarafından kullanılıyor olabilir. Seçeneği kaldırıp boş bir portun otomatik seçilmesini sağlayın veya farklı bir port seçin.
-- **Tarayıcı sertifika uyarısı gösteriyor.** Sertifika tarayıcınız tarafından güvenilmiyor veya `127.0.0.1` adresini kapsamıyor olabilir. SAN alanında `127.0.0.1` ve tercihen `localhost` bulunduğundan emin olun.
-- **413 hatası alıyorum.** POST veya PUT isteğinin gövdesi izin verilen sınırı aşıyor. Hammock istek gövdelerini 1 MiB ile sınırlar.
-- **Dosyam 404 dönüyor ama klasörde duruyor.** Klasör dışına işaret eden bir sembolik bağlantı olabilir. Hammock yalnızca sunulan klasörün içinde kalan hedeflere izin verir.
-- **405 hatası alıyorum.** Yalnızca GET, POST, PUT ve OPTIONS istekleri desteklenir.
-- **`curl` veya tarayıcı dışı bir istemcide CORS başlığı görmüyorum.** `Origin` başlığı gönderilmediğinde CORS yanıt başlıkları eklenmez. Bu durum beklenen davranıştır.
-- **Tarayıcıda CORS hatası alıyorum.** `Origin` değeri eksik, bozuk, `null`, yinelenen, virgülle ayrılmış liste veya `http`/`https` dışı olabilir. Sayfayı geçerli bir `http` veya `https` kaynağından açın.
-- **Sayfayı `file://` ile veya sandbox uygulanmış bir iframe içinde açtım.** Bu bağlamlar geçerli bir `http`/`https` kaynağı göndermez; sayfayı `http` veya `https` üzerinden sunun.
-- **Kimlik bilgili istek kullanıyorum.** `credentials: 'include'` desteklenmez; Hammock `Access-Control-Allow-Credentials` başlığını göndermez.
-- **HTTPS sayfası HTTP Hammock örneğine istek gönderiyor.** Tarayıcı karışık içeriği engeller. Gerekirse Hammock'u `--https` ve tarayıcınızın güvendiği bir sertifikayla çalıştırın.
-- **`localhost` ve `127.0.0.1` farklı kaynaklardır.** Tarayıcı bu adresleri ayrı kaynak olarak değerlendirir; isteğin geldiği adresle tutarlı bir `Origin` değeri kullanın.
-- **Çok büyük JSON dosyaları bellek kullanımını artırabilir.** Hammock dosyayı her istekte tamamen belleğe okur; çok büyük mock dosyaları yerine daha küçük dosyalar tercih edin.
-
-
-## Kapatma
-
-Sunucuyu durdurmak için terminalde Ctrl+C tuşlarına basın. Hammock'u işiniz bittiğinde çalışır durumda bırakmayın.
-
-## Lisans
-
-MIT. Ayrıntılar için `LICENSE` dosyasına bakın.
-
-Hammock yalnızca yerel geliştirme içindir. Üretim ortamında kullanmayın.
+Hammock is released under the MIT License. See [LICENSE](LICENSE) for the full text.
