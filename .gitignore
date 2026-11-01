@@ -1,3 +1,4 @@
 /env-tools/
 .idea
 .otag
+/node-modules/
