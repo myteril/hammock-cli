@@ -36,7 +36,7 @@ node --version
 Global olarak kurun:
 
 ```bash
-npm install -g @hammock/hammock-cli
+npm install -g @myteril/hammock-cli
 ```
 
 Bir iki JSON dosyası olan bir klasör oluşturun:

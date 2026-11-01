@@ -1,5 +1,5 @@
 {
-  "name": "@hammock/hammock-cli",
+  "name": "@myteril/hammock-cli",
   "version": "1.0.0",
   "description": "A zero-dependency CLI that serves JSON files from the current folder as a local mock API.",
   "type": "commonjs",

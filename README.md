@@ -36,7 +36,7 @@ node --version
 Install it globally:
 
 ```bash
-npm install -g @hammock/hammock-cli
+npm install -g @myteril/hammock-cli
 ```
 
 Create a folder with a JSON file or two:
