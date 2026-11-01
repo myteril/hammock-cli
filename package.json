@@ -1,0 +1,30 @@
+{
+  "name": "@hammock/hammock-cli",
+  "version": "1.0.0",
+  "description": "A zero-dependency CLI that serves JSON files from the current folder as a local mock API.",
+  "type": "commonjs",
+  "bin": {
+    "hammock": "bin/hammock.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "keywords": [
+    "api",
+    "cli",
+    "development",
+    "json",
+    "mock",
+    "server"
+  ]
+}
