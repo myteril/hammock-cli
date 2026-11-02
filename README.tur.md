@@ -4,12 +4,12 @@
 
 ![Node.js 22+](https://img.shields.io/badge/Node.js-22+-339933?logo=node.js&logoColor=white) ![MIT Lisansı](https://img.shields.io/badge/license-MIT-blue) ![0 bağımlılık](https://img.shields.io/badge/dependencies-0-brightgreen)
 
-[English Documentation](README.md) · **Türkçe Dokümantasyon**
+[English Documentation](README.md) · **Türkçe Belgeler**
 
 ## Yerel kullanım uyarısı
 
 > [!WARNING]
-> **Hammock yalnızca yerel geliştirme içindir ve güvenliği sağlanmış bir araç değildir.** Kimlik doğrulama yoktur, yetkilendirme yoktur; ne `127.0.0.1` adresine bağlanması ne de salt okunur davranışı bir erişim denetimi sınırıdır. Üretim ortamında veya genel erişime açık bir sunucuda asla kullanmayın; port yönlendirme, ters proxy ya da tünel üzerinden asla genel erişime açmayın.
+> **Hammock yalnızca yerel geliştirme içindir.** Kimlik doğrulama yoktur, yetkilendirme, CORS denetimi yoktur. Üretim ortamında veya genel erişime açık bir sunucuda asla kullanmayın; port yönlendirme, ters proxy ya da tünel üzerinden asla genel erişime açmayın.
 >
 > **Yalnızca sentetik mock verisi barındıran ayrı bir klasör sunun.** O klasördeki adreslenebilir her `.json` dosyası — nokta ile başlayan gizli dosyalar dahil — adresi bilindiğinde veya tahmin edildiğinde okunabilir; dizin listelemesinin olmaması gizlilik anlamına gelmez. Sunulan klasöre gizli bilgiler, token'lar, kimlik bilgileri, özel anahtarlar, üretim verisi ya da müşteri verisi koymayın.
 >
@@ -103,7 +103,7 @@ Hammock sadece okur: hiçbir dosyayı oluşturmaz, değiştirmez veya silmez.
 
 POST ve PUT gövdeleri okunur ve görmezden gelinir. `1 MiB` değerinden büyük bir gövde `413` ile reddedilir.
 
-> **CORS tamamen devredışı bırakılmıştır.** Hammock, sözdizimsel olarak geçerli tek bir `http` veya `https` `Origin` değerini `Access-Control-Allow-Origin` başlığında yansıtır ve bu yansıtma bir kaynak izin listesi değildir. Eksik veya geçersiz `Origin` için CORS yanıt başlığı gönderilmez, ancak istek yine normal şekilde işlenir. `Access-Control-Allow-Credentials` hiçbir zaman gönderilmez, bu yüzden `credentials: 'include'` gibi kimlik bilgisi içeren tarayıcı istekleri desteklenmez. Tarayıcınızın bu sunucuya erişmesine izin verdiği her `http` veya `https` sayfası — sizin oluşturmadığınız siteler dahil — sunulan JSON'u okuyabilir; tarayıcı olmayan istemciler ise CORS'u tamamen yok sayabilir.
+> **CORS olabildiğince serbest bırakılmıştır.** Hammock, sözdizimsel olarak geçerli tek bir `http` veya `https` `Origin` değerini `Access-Control-Allow-Origin` başlığında her zaman tam kaynak olarak yansıtır ve asla `*` kullanmaz; bu istekler için `Access-Control-Allow-Credentials: true` başlığını da gönderir. Böylece `credentials: 'include'` gibi kimlik bilgisi içeren `fetch` istekleri ve `withCredentials = true` kullanan `XMLHttpRequest` istekleri desteklenir. Ön kontrol istekleri `GET`, `POST`, `PUT` ve `OPTIONS` yöntemlerini onaylar; `Content-Type, Authorization` gibi sözdizimsel olarak geçerli bir `Access-Control-Request-Headers` değeri `Access-Control-Allow-Headers` başlığında yansıtılır, eksik veya geçersiz olduğunda ise bu başlık `*` yerine hiç gönderilmez. `400`, `404`, `405`, `413` ve `500` gibi hata yanıtları da aynı CORS başlıklarını taşır, böylece tarayıcı kodu bu yanıtları okuyabilir. Eksik, geçersiz, birden çok, `null` veya HTTP(S) dışı bir `Origin` için CORS yanıt başlığı gönderilmez, ancak istek yine normal şekilde işlenir. Kaynak yansıtma bir kaynak izin listesi değildir: tarayıcınızın bu sunucuya erişmesine izin verdiği her `http` veya `https` sayfası, sizin oluşturmadığınız siteler dâhil, sunulan JSON'u okuyabilir; isterse kimlik bilgileriyle de okuyabilir ve tarayıcı olmayan istemciler CORS'u tamamen yok sayabilir. Hammock'ta kimlik doğrulama ve yetkilendirme yoktur; kimlik bilgilerini hiçbir zaman doğrulamaz veya kullanmaz. Kimlik bilgilerini yalnızca tarayıcı taşır ve sunucu bunları korumaz. Çerezler ana makineye (host) göre gönderilir ve genellikle portları yok sayar; bu yüzden `127.0.0.1:3000` adresine yapılan bir istek, başka bir yerel servisin `127.0.0.1` için ayarladığı çerezleri taşıyabilir; tarayıcı çerez ilkesi yine de geçerlidir. `Origin: null`, `file://` sayfaları, korumalı alan (sandbox) çerçeveleri ve HTTP(S) dışı kaynaklar desteklenmez; ön yüzü bunun yerine normal bir yerel `http` kaynağından sunun. 
 
 ## Seçenekler
 
@@ -157,6 +157,7 @@ mkcert -cert-file cert.pem -key-file key.pem 127.0.0.1 localhost
 | `413` | Bir POST veya PUT gövdesi `1 MiB` değerinden büyük. |
 | `405` | Yöntem `GET`, `POST`, `PUT` veya `OPTIONS` değil. |
 | `curl` çıktısında CORS başlığı yok | Geçerli bir `Origin` başlığı gönderilmedi; bu beklenen bir durumdur ve istek yine de sunulur. |
+| Kimlik bilgisi içeren istek CORS hatasıyla başarısız oluyor | Sayfayı `file://` ya da korumalı alan (sandbox) kaynaklı `null` bir kaynaktan değil, normal bir `http` veya `https` kaynağından sunun ve yanıtta tam yansıtılmış `Origin` ile `Access-Control-Allow-Credentials: true` başlığının bulunduğunu doğrulayın. |
 
 ## Lisans
 

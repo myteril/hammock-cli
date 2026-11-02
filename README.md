@@ -9,7 +9,7 @@
 ## Local-only warning
 
 > [!WARNING]
-> **Hammock is for local development only, and it is not secured.** It has no authentication and no authorization, and neither binding to `127.0.0.1` nor its read-only behavior is an access-control boundary. Never use it in production or on a public server, and never expose it through port forwarding, a reverse proxy, or a tunnel.
+> **Hammock is for local development only, and it is not secured.** It has no authentication, no authorization, no CORS control. Never use it in production or on a public server, and never expose it through port forwarding, a reverse proxy, or a tunnel.
 >
 > **Serve a dedicated folder that holds only synthetic mock data.** Every routable `.json` file in that folder, including dot-prefixed hidden files, can be read whenever its route is known or guessed, and the absence of a directory listing is not confidentiality. Do not place secrets, tokens, credentials, private keys, production data, or customer data in the served folder.
 >
@@ -103,7 +103,7 @@ Hammock is read-only: it never creates, modifies, or deletes files. Read-only be
 
 POST and PUT bodies are read and discarded. A body larger than `1 MiB` is rejected with `413`.
 
-> **CORS is bypassed.** Hammock reflects a single syntactically valid `http` or `https` `Origin` in `Access-Control-Allow-Origin`, and that reflection is not an origin allowlist. A missing or invalid `Origin` gets no CORS response headers, but the request is still processed normally. `Access-Control-Allow-Credentials` is never sent, so credentialed browser requests such as `credentials: 'include'` are unsupported. Any `http` or `https` page your browser allows to reach this server — including sites you did not create — can read the served JSON, and non-browser clients can ignore CORS entirely.
+> **CORS is permissive, not disabled.** Hammock reflects any single syntactically valid `http` or `https` `Origin` in `Access-Control-Allow-Origin`, always as the exact origin and never as `*`, and it sends `Access-Control-Allow-Credentials: true` for those requests. Credentialed `fetch` requests such as `credentials: 'include'` and `XMLHttpRequest` requests with `withCredentials = true` are therefore supported. Preflight requests approve `GET`, `POST`, `PUT`, and `OPTIONS`; a syntactically valid `Access-Control-Request-Headers` value such as `Content-Type, Authorization` is echoed in `Access-Control-Allow-Headers`, while a missing or invalid value omits that header instead of falling back to `*`. Error responses such as `400`, `404`, `405`, `413`, and `500` carry the same CORS headers, so browser code can read them. A missing, invalid, multiple, `null`, or non-HTTP(S) `Origin` gets no CORS response headers, but the request is still processed normally. Origin reflection is not an origin allowlist: any `http` or `https` page your browser allows to reach this server — including sites you did not create — can read the served JSON, with credentials if it asks for them, and non-browser clients can ignore CORS entirely. Hammock still has no authentication and no authorization and never validates or uses credentials; the browser merely carries them, and the server does not protect them. Cookies are host-scoped and generally ignore ports, so a request to `127.0.0.1:3000` may carry cookies another local service set for `127.0.0.1`, subject to browser cookie policy. `Origin: null`, `file://` pages, sandboxed frames, and non-HTTP(S) origins are unsupported; serve the frontend from a normal local `http` origin instead. 
 
 ## Options
 
@@ -157,6 +157,7 @@ mkcert -cert-file cert.pem -key-file key.pem 127.0.0.1 localhost
 | `413` | A POST or PUT body is larger than `1 MiB`. |
 | `405` | The method is not `GET`, `POST`, `PUT`, or `OPTIONS`. |
 | No CORS headers in `curl` | No valid `Origin` header was sent; this is expected and the request was still served. |
+| Credentialed request fails with a CORS error | Serve the page from a normal `http` or `https` origin, not `file://` or a sandboxed `null` origin, and check that the response carries the exact reflected `Origin` plus `Access-Control-Allow-Credentials: true`. |
 
 ## License
 

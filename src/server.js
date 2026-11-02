@@ -28,7 +28,7 @@ function allowHeaders(req) {
   ) {
     return requested;
   }
-  return '*';
+  return undefined;
 }
 
 function requestOrigin(req) {
@@ -83,7 +83,11 @@ function responseHeaders(req) {
 
   const origin = requestOrigin(req);
   if (origin !== undefined && req.headers) {
-    headers['Access-Control-Allow-Headers'] = allowHeaders(req);
+    const allowedHeaders = allowHeaders(req);
+    if (allowedHeaders !== undefined) {
+      headers['Access-Control-Allow-Headers'] = allowedHeaders;
+    }
+    headers['Access-Control-Allow-Credentials'] = 'true';
     headers['Access-Control-Allow-Methods'] = ALLOWED_METHODS;
     headers['Access-Control-Allow-Origin'] = origin;
   }
