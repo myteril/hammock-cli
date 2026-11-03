@@ -4,7 +4,7 @@
 
 ![Node.js 22+](https://img.shields.io/badge/Node.js-22+-339933?logo=node.js&logoColor=white) ![MIT Lisansı](https://img.shields.io/badge/license-MIT-blue) ![0 bağımlılık](https://img.shields.io/badge/dependencies-0-brightgreen)
 
-[English Documentation](README.md) · **Türkçe Belgeler**
+[English Documentation](README.md) · **Türkçe Belgeler** · [Yapay Zeka Yönergeleri](AGENTS.md) ·
 
 ## Yerel kullanım uyarısı
 

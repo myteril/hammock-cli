@@ -4,7 +4,7 @@
 
 ![Node.js 22+](https://img.shields.io/badge/Node.js-22+-339933?logo=node.js&logoColor=white) ![MIT License](https://img.shields.io/badge/license-MIT-blue) ![0 dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
 
-**English Documentation** · [Turkish Documentation](README.tur.md)
+**English Documentation** · [Turkish Documentation](README.tur.md) · [AI Agent Instructions](AGENTS.md)
 
 ## Local-only warning
 
